@@ -232,63 +232,8 @@
         <h2 class="font-['Outfit'] text-3xl sm:text-4xl font-bold text-center mb-4">À quoi ça ressemble</h2>
         <p class="text-zinc-400 text-center mb-12 max-w-lg mx-auto">Un aperçu de ton récap personnel — comme un Spotify Wrapped®, mais pour tes séries.</p>
 
-        <div class="wrapped-card p-8 sm:p-12 max-w-md mx-auto opacity-60 scale-95 pointer-events-none">
-          <div class="relative z-10">
-            <div class="flex items-center justify-between mb-8">
-              <span class="font-['Outfit'] text-2xl font-bold tracking-tight">
-                <span class="text-[#F59E0B]">Re</span><span class="text-white">Watch</span>
-              </span>
-              <span class="text-zinc-500 text-sm">2024 — 2026</span>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-8">
-              <div class="bg-white/5 rounded-xl p-4 text-center">
-                <p class="stat-value text-3xl sm:text-4xl font-['Outfit'] font-extrabold">12</p>
-                <p class="text-zinc-400 text-xs sm:text-sm mt-1">Séries regardées</p>
-              </div>
-              <div class="bg-white/5 rounded-xl p-4 text-center">
-                <p class="stat-value text-3xl sm:text-4xl font-['Outfit'] font-extrabold">247</p>
-                <p class="text-zinc-400 text-xs sm:text-sm mt-1">Épisodes vus</p>
-              </div>
-              <div class="bg-white/5 rounded-xl p-4 text-center">
-                <p class="stat-value text-3xl sm:text-4xl font-['Outfit'] font-extrabold">8</p>
-                <p class="text-zinc-400 text-xs sm:text-sm mt-1">Saisons complétées</p>
-              </div>
-              <div class="bg-white/5 rounded-xl p-4 text-center">
-                <p class="stat-value text-3xl sm:text-4xl font-['Outfit'] font-extrabold">186 h</p>
-                <p class="text-zinc-400 text-xs sm:text-sm mt-1">Temps total</p>
-              </div>
-            </div>
-
-            <div class="bg-white/5 rounded-xl p-5 mb-4">
-              <p class="text-zinc-500 text-xs uppercase tracking-widest mb-3">Top séries</p>
-              <div class="flex items-center gap-3 mb-2">
-                <span class="text-zinc-500 text-sm w-5">1</span>
-                <div class="flex-1 h-8 rounded-lg bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/60 flex items-center px-3">
-                  <span class="text-[#0A0A0B] font-medium text-sm">Game of Thrones</span>
-                </div>
-                <span class="text-zinc-400 text-sm font-medium">73</span>
-              </div>
-              <div class="flex items-center gap-3 mb-2">
-                <span class="text-zinc-500 text-sm w-5">2</span>
-                <div class="flex-1 h-8 rounded-lg bg-gradient-to-r from-[#A855F7]/80 to-[#A855F7]/40 flex items-center px-3">
-                  <span class="text-white font-medium text-sm">Stranger Things</span>
-                </div>
-                <span class="text-zinc-400 text-sm font-medium">42</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="text-zinc-500 text-sm w-5">3</span>
-                <div class="flex-1 h-8 rounded-lg bg-gradient-to-r from-[#3B82F6]/80 to-[#3B82F6]/40 flex items-center px-3">
-                  <span class="text-white font-medium text-sm">The Office</span>
-                </div>
-                <span class="text-zinc-400 text-sm font-medium">36</span>
-              </div>
-            </div>
-
-            <div class="text-center pt-4 border-t border-white/10">
-              <p class="text-zinc-500 text-xs">Généré par <span class="text-[#F59E0B]">ReWatch</span> · rewatching.app</p>
-            </div>
-          </div>
+        <div class="max-w-xs mx-auto opacity-80 rounded-2xl overflow-hidden shadow-2xl pointer-events-none" style="box-shadow: 0 0 40px rgba(245,158,11,0.06);">
+          <canvas id="mockupCanvas" width="1080" height="1920" style="display:block;width:100%;height:auto;aspect-ratio:9/16;"></canvas>
         </div>
 
         <div class="text-center mt-8">
@@ -785,6 +730,28 @@
         if (target) target.scrollIntoView({ behavior: 'smooth' });
       });
     });
+
+    // ===== RENDER MOCKUP =====
+    (async () => {
+      const canvas = document.getElementById('mockupCanvas');
+      if (!canvas) return;
+      await drawWrappedCanvas(canvas, {
+        totalEpisodes: 247,
+        totalShows: 12,
+        topShows: [
+          { title: 'Game of Thrones', count: 73 },
+          { title: 'Stranger Things', count: 42 },
+          { title: 'The Office', count: 36 },
+          { title: 'Breaking Bad', count: 28 },
+          { title: 'The Crown', count: 22 },
+        ],
+        yearEpisodes: [['2022',8],['2023',45],['2024',112],['2025',52],['2026',30]],
+        firstDate: new Date('2022-01-15'),
+        lastDate: new Date('2026-03-20'),
+        totalSeasons: 8,
+        uniqueDays: 84,
+      });
+    })();
   </script>
 
 </body>
