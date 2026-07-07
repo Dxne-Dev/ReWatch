@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ReWatch — Récupère ton bilan TV Time</title>
+  <meta name="description" content="TV Time ferme le 15 juillet 2026. Génère ton récap visuel personnalisé avant qu'il ne disparaisse. 100% confidentiel, rien n'est stocké.">
+  <meta name="theme-color" content="#0A0A0B">
+  <meta property="og:title" content="ReWatch — Récupère ton bilan TV Time">
+  <meta property="og:description" content="Génère ton récap visuel personnalisé avant la fermeture de TV Time.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Rubik', sans-serif; background: #0A0A0B; color: #FAFAFA; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
+
+    .drop-zone { border: 2px dashed #27272A; border-radius: 1.5rem; transition: all 0.3s ease; cursor: pointer; background: rgba(24,24,27,0.5); }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: #F59E0B; background: rgba(245,158,11,0.08); box-shadow: 0 0 40px rgba(245,158,11,0.08); }
+    .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    .glow-amber { box-shadow: 0 0 30px rgba(245,158,11,0.15); }
+    .glow-purple { box-shadow: 0 0 30px rgba(168,85,247,0.15); }
+
+    @keyframes fade-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse-dot { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+    @keyframes count-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-up { animation: fade-up 0.6s ease-out forwards; }
+    .animate-count { animation: count-up 0.5s ease-out forwards; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+
+    .step-card { background: rgba(24,24,27,0.6); border: 1px solid #27272A; border-radius: 1rem; transition: all 0.3s ease; }
+    .step-card:hover { border-color: #3F3F46; background: rgba(24,24,27,0.8); }
+
+    .stat-value { font-family: 'Outfit', sans-serif; font-weight: 800; background: linear-gradient(135deg, #F59E0B, #A855F7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.875rem 2rem; background: #F59E0B; color: #0A0A0B; font-family: 'Outfit', sans-serif; font-weight: 700; border-radius: 9999px; border: none; cursor: pointer; transition: all 0.2s ease; text-decoration: none; }
+    .btn-primary:hover { background: #D97706; transform: translateY(-1px); box-shadow: 0 8px 25px rgba(245,158,11,0.25); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.875rem 2rem; background: rgba(255,255,255,0.06); color: #FAFAFA; font-family: 'Outfit', sans-serif; font-weight: 600; border-radius: 9999px; border: 1px solid #27272A; cursor: pointer; transition: all 0.2s ease; text-decoration: none; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: #3F3F46; }
+
+    .btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.06); color: #FAFAFA; border-radius: 9999px; border: 1px solid #27272A; cursor: pointer; transition: all 0.2s ease; font-family: 'Rubik', sans-serif; font-size: 0.875rem; font-weight: 500; text-decoration: none; }
+    .btn-icon:hover { background: rgba(255,255,255,0.1); border-color: #3F3F46; }
+
+    .wrapped-card { background: linear-gradient(145deg, #18181B, #27272A); border-radius: 2rem; border: 1px solid #3F3F46; position: relative; overflow: hidden; }
+    .wrapped-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg at 50% 50%, transparent, rgba(245,158,11,0.03), transparent, rgba(168,85,247,0.03), transparent); animation: rotate-bg 20s linear infinite; }
+    @keyframes rotate-bg { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #18181B; border: 1px solid #27272A; border-radius: 1rem; padding: 0.75rem 1.5rem; color: #FAFAFA; font-size: 0.875rem; z-index: 100; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+    .toast.show { opacity: 1; }
+
+    .progress-bar { height: 3px; background: rgba(245,158,11,0.2); border-radius: 9999px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: #F59E0B; border-radius: 9999px; transition: width 0.5s ease; width: 0%; }
+
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- NAV -->
+  <nav class="fixed top-0 left-0 right-0 z-50" style="background: rgba(10,10,11,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(39,39,42,0.5);">
+    <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+      <span class="font-['Outfit'] text-xl font-bold tracking-tight">
+        <span class="text-[#F59E0B]">Re</span><span class="text-white">Watch</span>
+      </span>
+      <div class="flex items-center gap-3">
+        <a href="#how" class="text-sm text-zinc-400 hover:text-white transition-colors hidden sm:block">Fonctionnement</a>
+        <a href="#upload" class="btn-primary text-sm py-2 px-5">Commencer</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ===== HERO + UPLOAD ===== -->
+    <section id="upload" class="min-h-screen flex flex-col justify-center pt-24 pb-16 px-5">
+      <div class="max-w-3xl mx-auto w-full text-center">
+
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F59E0B]/10 border border-[#F59E0B]/20 text-[#F59E0B] text-sm font-medium mb-8 animate-fade-up">
+          <span class="w-2 h-2 rounded-full bg-[#F59E0B] inline-block" style="animation: pulse-dot 1.5s ease-in-out infinite;"></span>
+          TV Time ferme définitivement le 15 juillet 2026
+        </div>
+
+        <h1 class="font-['Outfit'] text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight mb-6 animate-fade-up delay-100">
+          <span class="text-white">TV Time ferme.<br></span>
+          <span class="text-transparent bg-clip-text" style="background-image: linear-gradient(135deg, #F59E0B, #A855F7);">
+            Récupère ton bilan<br>
+          </span>
+          <span class="text-white">avant qu'il ne disparaisse.</span>
+        </h1>
+
+        <p class="text-zinc-400 text-lg sm:text-xl max-w-xl mx-auto mb-10 animate-fade-up delay-200">
+          Importe ton export CSV ou JSON TV Time et obtiens un récap visuel personnalisé de toute ta vie de série. 
+          <span class="text-zinc-300 font-medium">100% côté client, rien n'est stocké.</span>
+        </p>
+
+        <!-- Drop Zone -->
+        <div id="dropZone" class="drop-zone relative p-8 sm:p-12 mb-6 animate-fade-up delay-300">
+          <input type="file" id="fileInput" accept=".csv,.json" />
+          <div id="dropContent" class="flex flex-col items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-[#F59E0B]/10 flex items-center justify-center">
+              <svg class="w-8 h-8 text-[#F59E0B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-white font-['Outfit'] text-lg font-semibold">Dépose ton fichier ici</p>
+              <p class="text-zinc-500 text-sm mt-1">ou clique pour parcourir — CSV ou JSON accepté</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-zinc-600">
+              <span>Exporté depuis TV Time > Mes données > Exporter</span>
+            </div>
+          </div>
+          <div id="dropProgress" class="hidden w-full max-w-xs mx-auto">
+            <div class="flex items-center gap-3 mb-3">
+              <svg class="w-5 h-5 text-[#F59E0B] animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              <span class="text-zinc-300 text-sm" id="progressLabel">Analyse en cours...</span>
+            </div>
+            <div class="progress-bar"><div class="progress-bar-fill" id="progressFill"></div></div>
+          </div>
+          <div id="dropSuccess" class="hidden flex-col items-center gap-3">
+            <div class="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center">
+              <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <p class="text-white font-['Outfit'] text-lg font-semibold">Fichier chargé !</p>
+            <p class="text-zinc-400 text-sm" id="fileStats"></p>
+            <button onclick="resetUpload()" class="text-sm text-zinc-500 hover:text-white transition-colors">Changer de fichier</button>
+          </div>
+        </div>
+
+        <p class="text-zinc-600 text-xs animate-fade-up delay-400">
+          <svg class="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Tes données ne quittent jamais ton appareil. Aucun fichier n'est envoyé sur un serveur.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== RESULTS (shown after upload) ===== -->
+    <section id="results" class="hidden pb-24 px-5">
+      <div class="max-w-3xl mx-auto w-full">
+
+        <div class="text-center mb-12 animate-fade-up">
+          <h2 class="font-['Outfit'] text-3xl sm:text-4xl font-bold mb-4">Ton bilan <span class="text-transparent bg-clip-text" style="background-image: linear-gradient(135deg, #F59E0B, #A855F7);">ReWatch</span></h2>
+          <p class="text-zinc-400">Voici ton récap personnel. Télécharge-le ou partage-le.</p>
+        </div>
+
+        <!-- Canvas preview — exact rendering that will be downloaded -->
+        <div class="w-full max-w-sm mx-auto mb-8 rounded-2xl overflow-hidden shadow-2xl animate-fade-up" style="box-shadow: 0 0 60px rgba(245,158,11,0.08);">
+          <canvas id="previewCanvas" width="1080" height="1920" style="display:block;width:100%;height:auto;aspect-ratio:9/16;"></canvas>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center animate-fade-up">
+          <button onclick="downloadImage(this)" class="btn-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Télécharger l'image
+          </button>
+          <button onclick="shareThreads()" class="btn-icon">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.25 8.5c-1.5-1-3.5-1.5-5.5-1-1.5.4-2.5 1.5-3 3-.5-1.5-1.5-2.6-3-3-2-.5-4 0-5.5 1C.75 10 .25 13 1 16c.5 2 2 4 5 4 2 0 3.5-1.5 4-3 .5 1.5 2 3 4 3 3 0 4.5-2 5-4 .75-3 .25-6-1.75-7.5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v6m-3-3h6"/></svg>
+            Partager sur Threads
+          </button>
+          <button onclick="shareInstagramBtn(this)" class="btn-icon">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" stroke-width="1.5"/><circle cx="12" cy="12" r="5" stroke-width="1.5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/></svg>
+            Partager sur Instagram
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HOW IT WORKS ===== -->
+    <section id="how" class="py-24 px-5" style="background: radial-gradient(ellipse at top, rgba(168,85,247,0.05) 0%, transparent 70%);">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="font-['Outfit'] text-3xl sm:text-4xl font-bold text-center mb-4">Comment ça marche</h2>
+        <p class="text-zinc-400 text-center mb-16 max-w-lg mx-auto">Trois étapes pour récupérer ton bilan avant la fermeture.</p>
+
+        <div class="grid sm:grid-cols-3 gap-6">
+          <div class="step-card p-6 text-center">
+            <div class="w-12 h-12 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-4">
+              <svg class="w-6 h-6 text-[#F59E0B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </div>
+            <span class="text-xs text-[#F59E0B] font-medium mb-1 block">Étape 1</span>
+            <h3 class="font-['Outfit'] font-semibold text-lg mb-2">Exporte depuis TV Time</h3>
+            <p class="text-zinc-400 text-sm">Dans l'app TV Time, va dans Mes données > Exporter et télécharge ton fichier.</p>
+          </div>
+
+          <div class="step-card p-6 text-center">
+            <div class="w-12 h-12 rounded-xl bg-[#A855F7]/10 flex items-center justify-center mx-auto mb-4">
+              <svg class="w-6 h-6 text-[#A855F7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            </div>
+            <span class="text-xs text-[#A855F7] font-medium mb-1 block">Étape 2</span>
+            <h3 class="font-['Outfit'] font-semibold text-lg mb-2">Importe-le ici</h3>
+            <p class="text-zinc-400 text-sm">Dépose ton fichier CSV ou JSON dans la zone ci-dessus. Tout est traité sur ton appareil.</p>
+          </div>
+
+          <div class="step-card p-6 text-center">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#F59E0B]/10 to-[#A855F7]/10 flex items-center justify-center mx-auto mb-4">
+              <svg class="w-6 h-6 text-[#F59E0B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <span class="text-xs text-transparent bg-clip-text bg-gradient-to-r from-[#F59E0B] to-[#A855F7] font-medium mb-1 block">Étape 3</span>
+            <h3 class="font-['Outfit'] font-semibold text-lg mb-2">Récupère ton visuel</h3>
+            <p class="text-zinc-400 text-sm">Télécharge ton récap ou partage-le sur les réseaux en un clic.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== EXAMPLE MOCKUP ===== -->
+    <section class="py-24 px-5">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="font-['Outfit'] text-3xl sm:text-4xl font-bold text-center mb-4">À quoi ça ressemble</h2>
+        <p class="text-zinc-400 text-center mb-12 max-w-lg mx-auto">Un aperçu de ton récap personnel — comme un Spotify Wrapped®, mais pour tes séries.</p>
+
+        <div class="wrapped-card p-8 sm:p-12 max-w-md mx-auto opacity-60 scale-95 pointer-events-none">
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-8">
+              <span class="font-['Outfit'] text-2xl font-bold tracking-tight">
+                <span class="text-[#F59E0B]">Re</span><span class="text-white">Watch</span>
+              </span>
+              <span class="text-zinc-500 text-sm">2024 — 2026</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-8">
+              <div class="bg-white/5 rounded-xl p-4 text-center">
+                <p class="stat-value text-3xl sm:text-4xl font-['Outfit'] font-extrabold">12</p>
+                <p class="text-zinc-400 text-xs sm:text-sm mt-1">Séries regardées</p>
+              </div>
+              <div class="bg-white/5 rounded-xl p-4 text-center">
+                <p class="stat-value text-3xl sm:text-4xl font-['Outfit'] font-extrabold">247</p>
+                <p class="text-zinc-400 text-xs sm:text-sm mt-1">Épisodes vus</p>
+              </div>
+              <div class="bg-white/5 rounded-xl p-4 text-center">
+                <p class="stat-value text-3xl sm:text-4xl font-['Outfit'] font-extrabold">8</p>
+                <p class="text-zinc-400 text-xs sm:text-sm mt-1">Saisons complétées</p>
+              </div>
+              <div class="bg-white/5 rounded-xl p-4 text-center">
+                <p class="stat-value text-3xl sm:text-4xl font-['Outfit'] font-extrabold">186 h</p>
+                <p class="text-zinc-400 text-xs sm:text-sm mt-1">Temps total</p>
+              </div>
+            </div>
+
+            <div class="bg-white/5 rounded-xl p-5 mb-4">
+              <p class="text-zinc-500 text-xs uppercase tracking-widest mb-3">Top séries</p>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-zinc-500 text-sm w-5">1</span>
+                <div class="flex-1 h-8 rounded-lg bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/60 flex items-center px-3">
+                  <span class="text-[#0A0A0B] font-medium text-sm">Game of Thrones</span>
+                </div>
+                <span class="text-zinc-400 text-sm font-medium">73</span>
+              </div>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-zinc-500 text-sm w-5">2</span>
+                <div class="flex-1 h-8 rounded-lg bg-gradient-to-r from-[#A855F7]/80 to-[#A855F7]/40 flex items-center px-3">
+                  <span class="text-white font-medium text-sm">Stranger Things</span>
+                </div>
+                <span class="text-zinc-400 text-sm font-medium">42</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-zinc-500 text-sm w-5">3</span>
+                <div class="flex-1 h-8 rounded-lg bg-gradient-to-r from-[#3B82F6]/80 to-[#3B82F6]/40 flex items-center px-3">
+                  <span class="text-white font-medium text-sm">The Office</span>
+                </div>
+                <span class="text-zinc-400 text-sm font-medium">36</span>
+              </div>
+            </div>
+
+            <div class="text-center pt-4 border-t border-white/10">
+              <p class="text-zinc-500 text-xs">Généré par <span class="text-[#F59E0B]">ReWatch</span> · rewatching.app</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mt-8">
+          <p class="text-zinc-500 text-sm">Importe ton fichier pour voir <span class="text-white">ton</span> récap</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TRUST / PRIVACY ===== -->
+    <section class="py-24 px-5" style="background: radial-gradient(ellipse at bottom, rgba(245,158,11,0.04) 0%, transparent 70%);">
+      <div class="max-w-3xl mx-auto text-center">
+        <div class="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-6">
+          <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h2 class="font-['Outfit'] text-3xl sm:text-4xl font-bold mb-4">Tes données sont en sécurité</h2>
+        <p class="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
+          On ne veut <span class="text-white font-medium">pas</span> de tes données. On veut juste te rendre ton histoire.
+        </p>
+
+        <div class="grid sm:grid-cols-3 gap-4 text-left">
+          <div class="bg-white/[0.03] border border-white/5 rounded-xl p-5">
+            <svg class="w-6 h-6 text-green-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/></svg>
+            <h3 class="font-['Outfit'] font-semibold text-white mb-1">100% côté client</h3>
+            <p class="text-zinc-500 text-sm">Tout le traitement a lieu dans ton navigateur. Aucune donnée ne traverse le réseau.</p>
+          </div>
+          <div class="bg-white/[0.03] border border-white/5 rounded-xl p-5">
+            <svg class="w-6 h-6 text-green-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+            <h3 class="font-['Outfit'] font-semibold text-white mb-1">Rien n'est stocké</h3>
+            <p class="text-zinc-500 text-sm">Pas de base de données, pas de serveur, pas de cookies. Ton fichier est supprimé à la fermeture de l'onglet.</p>
+          </div>
+          <div class="bg-white/[0.03] border border-white/5 rounded-xl p-5">
+            <svg class="w-6 h-6 text-green-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            <h3 class="font-['Outfit'] font-semibold text-white mb-1">Open source</h3>
+            <p class="text-zinc-500 text-sm">Le code est visible et vérifiable. Tu peux même l'exécuter en local si tu préfères.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CTA + MIGRATION ===== -->
+    <section class="py-24 px-5">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="font-['Outfit'] text-3xl sm:text-4xl font-bold mb-4">Ne perds pas ton histoire</h2>
+        <p class="text-zinc-400 text-lg mb-8 max-w-lg mx-auto">
+          TV Time ferme le 15 juillet 2026. Assure-toi d'avoir exporté tes données avant cette date.
+        </p>
+        <a href="#upload" class="btn-primary text-lg px-10 py-4 mb-12">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          Importer mon fichier
+        </a>
+
+        <div class="border-t border-white/10 pt-12">
+          <p class="text-zinc-500 text-sm mb-4">Tu cherches une alternative à TV Time ?</p>
+          <div class="flex flex-wrap justify-center gap-3">
+            <a href="https://trakt.tv/" target="_blank" rel="noopener" class="btn-icon text-sm">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.5 12L12 7l2.5 2.5L12 12l2.5 2.5L12 17l5.5-5z"/></svg>
+              Trakt
+            </a>
+            <a href="https://simkl.com/" target="_blank" rel="noopener" class="btn-icon text-sm">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/></svg>
+              Simkl
+            </a>
+            <a href="https://mydramalist.com/" target="_blank" rel="noopener" class="btn-icon text-sm">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/></svg>
+              MyDramaList
+            </a>
+          </div>
+          <p class="text-zinc-600 text-xs mt-6">
+            ReWatch n'est pas affilié à TV Time. Service gratuit et indépendant.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-white/5 py-8 px-5">
+    <div class="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <span class="font-['Outfit'] text-sm font-bold tracking-tight">
+        <span class="text-[#F59E0B]">Re</span><span class="text-zinc-400">Watch</span>
+      </span>
+      <p class="text-zinc-600 text-xs">Fait avec urgence — parce que le 15 juillet 2026 arrive vite.</p>
+    </div>
+  </footer>
+
+  <script>
+    // ===== STATE =====
+    let rawData = null;
+    let stats = null;
+    let isProcessing = false;
+
+    // ===== DOM REFS =====
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const dropContent = document.getElementById('dropContent');
+    const dropProgress = document.getElementById('dropProgress');
+    const dropSuccess = document.getElementById('dropSuccess');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+    const fileStats = document.getElementById('fileStats');
+    const results = document.getElementById('results');
+    const toast = document.getElementById('toast');
+
+    // ===== TOAST =====
+    let toastTimer;
+
+    function showToast(msg) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===== DRAG & DROP =====
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+    // ===== FILE HANDLING =====
+    function handleFile(file) {
+      if (isProcessing) return;
+      if (!file) return;
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext !== 'csv' && ext !== 'json') {
+        showToast('Seuls les fichiers CSV et JSON sont acceptés.');
+        return;
+      }
+
+      isProcessing = true;
+      dropContent.classList.add('hidden');
+      dropProgress.classList.remove('hidden');
+      setProgress(30, 'Lecture du fichier...');
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProgress(60, 'Analyse des données...');
+        setTimeout(() => {
+          try {
+            const text = e.target.result;
+            if (ext === 'json') {
+              rawData = parseJSON(text);
+            } else {
+              rawData = parseCSV(text);
+            }
+            setProgress(90, 'Génération du récap...');
+            setTimeout(() => {
+              stats = computeStats(rawData);
+              renderPreview(stats);
+              dropProgress.classList.add('hidden');
+              dropSuccess.classList.remove('hidden');
+              const count = rawData.length;
+              fileStats.textContent = `${count} série${count > 1 ? 's' : ''} détectée${count > 1 ? 's' : ''}`;
+              results.classList.remove('hidden');
+              results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              isProcessing = false;
+            }, 400);
+          } catch (err) {
+            showToast('Erreur : ' + err.message);
+            resetUpload();
+            isProcessing = false;
+          }
+        }, 300);
+      };
+      reader.onerror = () => { showToast('Erreur de lecture du fichier.'); resetUpload(); isProcessing = false; };
+      reader.readAsText(file);
+    }
+
+    function setProgress(pct, label) {
+      progressFill.style.width = pct + '%';
+      progressLabel.textContent = label;
+    }
+
+    function resetUpload() {
+      rawData = null;
+      stats = null;
+      fileInput.value = '';
+      dropContent.classList.remove('hidden');
+      dropProgress.classList.add('hidden');
+      dropSuccess.classList.add('hidden');
+      results.classList.add('hidden');
+      isProcessing = false;
+    }
+
+    // ===== PARSING =====
+    function parseJSON(text) {
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) throw new Error('Format JSON invalide : tableau attendu.');
+      const valid = data.filter(s => s && typeof s === 'object' && s.title);
+      if (valid.length === 0) throw new Error('Aucune série trouvée dans le fichier JSON.');
+      return valid;
+    }
+
+    function parseCSV(text) {
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) throw new Error('Fichier CSV trop court.');
+
+      const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/["']/g, ''));
+      const titleIdx = header.findIndex(h => h.includes('title') || h.includes('show') || h.includes('series') || h.includes('name'));
+      const seasonIdx = header.findIndex(h => h.includes('season'));
+      const epIdx = header.findIndex(h => h.includes('episode') || h.includes('number'));
+      const watchedIdx = header.findIndex(h => h.includes('watched') || h.includes('date') || h.includes('time'));
+
+      if (titleIdx === -1) throw new Error('Colonne "title" introuvable dans le CSV.');
+
+      const shows = {};
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/["']/g, ''));
+        const title = cols[titleIdx];
+        if (!title) continue;
+        if (!shows[title]) shows[title] = { title, seasons: {} };
+
+        const seasonNum = seasonIdx >= 0 ? parseInt(cols[seasonIdx]) || 1 : 1;
+        const epNum = epIdx >= 0 ? parseInt(cols[epIdx]) || 1 : 1;
+        const watchedAt = watchedIdx >= 0 && cols[watchedIdx] ? cols[watchedIdx] : null;
+
+        if (!shows[title].seasons[seasonNum]) shows[title].seasons[seasonNum] = { season_number: seasonNum, episodes: [] };
+        shows[title].seasons[seasonNum].episodes.push({
+          episode_number: epNum,
+          is_watched: true,
+          watched_at: watchedAt
+        });
+      }
+
+      const result = Object.values(shows).map(s => ({
+        title: s.title,
+        seasons: Object.values(s.seasons)
+      }));
+
+      if (result.length === 0) throw new Error('Aucune série trouvée dans le CSV.');
+      return result;
+    }
+
+    // ===== STATS =====
+    function computeStats(data) {
+      let totalEpisodes = 0;
+      let totalSeasons = 0;
+      let showEpisodes = [];
+      const allWatchedDates = [];
+      const yearEpisodes = {};
+
+      data.forEach(show => {
+        let showEp = 0;
+        (show.seasons || []).forEach(season => {
+          const watched = (season.episodes || []).filter(e => e.is_watched);
+          showEp += watched.length;
+          if (watched.length > 0) totalSeasons++;
+          watched.forEach(ep => {
+            if (ep.watched_at) {
+              const d = new Date(ep.watched_at);
+              if (!isNaN(d.getTime())) {
+                allWatchedDates.push(d);
+                const y = d.getFullYear();
+                if (!yearEpisodes[y]) yearEpisodes[y] = 0;
+                yearEpisodes[y]++;
+              }
+            }
+          });
+        });
+        totalEpisodes += showEp;
+        showEpisodes.push({ title: show.title, count: showEp });
+      });
+
+      showEpisodes.sort((a, b) => b.count - a.count);
+
+      // Unique days
+      const uniqueDays = new Set(allWatchedDates.map(d => d.toISOString().split('T')[0])).size;
+
+      return {
+        totalShows: data.length,
+        totalEpisodes,
+        totalSeasons,
+        uniqueDays,
+        topShows: showEpisodes.slice(0, 5),
+        yearEpisodes: Object.entries(yearEpisodes).sort((a, b) => a[0] - b[0]),
+        firstDate: allWatchedDates.length > 0 ? new Date(Math.min(...allWatchedDates)) : null,
+        lastDate: allWatchedDates.length > 0 ? new Date(Math.max(...allWatchedDates)) : null,
+      };
+    }
+
+    // ===== CANVAS RENDER (shared by preview + download) =====
+    async function drawWrappedCanvas(canvas, s) {
+      const W = 1080, H = 1920;
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Wait for fonts
+      if (document.fonts) {
+        await Promise.race([
+          Promise.all([
+            document.fonts.load('800 88px "Outfit"'),
+            document.fonts.load('700 140px "Outfit"'),
+            document.fonts.load('500 32px "Rubik"'),
+            document.fonts.load('600 40px "Rubik"'),
+            document.fonts.load('500 26px "Rubik"'),
+          ]),
+          new Promise(r => setTimeout(r, 3000)),
+        ]);
+      }
+
+      // ── Background gradient ──
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, '#18181B');
+      bg.addColorStop(0.5, '#1c1220');
+      bg.addColorStop(1, '#2a1810');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // ── Glow blobs ──
+      const glow = (x, y, r, color) => {
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, color);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+      };
+      glow(900, 400, 700, 'rgba(245,158,11,0.3)');
+      glow(150, 1700, 800, 'rgba(168,85,247,0.25)');
+
+      // ── Grain / noise ──
+      {
+        const img = ctx.getImageData(0, 0, W, H);
+        const d = img.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const n = (Math.random() - 0.5) * 14;
+          d[i] += n;
+          d[i + 1] += n;
+          d[i + 2] += n;
+        }
+        ctx.putImageData(img, 0, 0);
+      }
+
+      ctx.textBaseline = 'top';
+
+      // ── Header: REWATCH · TV TIME BILAN ──
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '500 32px Rubik';
+      ctx.fillText('REWATCH · TV TIME BILAN', 80, 120);
+
+      // ── Main heading ──
+      ctx.fillStyle = '#fff';
+      ctx.font = '800 88px Outfit';
+      ctx.fillText('Ton année', 80, 220);
+      ctx.fillText('en séries.', 80, 330);
+
+      // ── Big stats ──
+      const totalHours = Math.round(s.totalEpisodes * 0.75);
+
+      const bigStat = (label, value, y) => {
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '500 30px Rubik';
+        ctx.fillText(label.toUpperCase(), 80, y);
+
+        const grad = ctx.createLinearGradient(80, y + 44, 500, y + 44);
+        grad.addColorStop(0, '#F59E0B');
+        grad.addColorStop(1, '#A855F7');
+        ctx.fillStyle = grad;
+        ctx.font = '700 140px Outfit';
+        ctx.fillText(value, 80, y + 44);
+      };
+
+      bigStat('Épisodes vus', s.totalEpisodes.toLocaleString('fr-FR'), 520);
+      bigStat('Heures devant l\'écran', totalHours.toLocaleString('fr-FR'), 760);
+      bigStat('Séries suivies', s.totalShows.toLocaleString('fr-FR'), 1000);
+
+      // ── Top 5 shows ──
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '500 30px Rubik';
+      ctx.fillText('TOP 5 SÉRIES', 80, 1260);
+
+      s.topShows.forEach((show, i) => {
+        const y = 1330 + i * 90;
+        const accentColors = ['#F59E0B', '#A855F7', '#3B82F6', '#22C55E', '#EF4444'];
+
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        roundRect(ctx, 80, y, 920, 76, 16);
+        ctx.fill();
+
+        ctx.fillStyle = accentColors[i];
+        roundRect(ctx, 80, y, 6, 76, 3);
+        ctx.fill();
+
+        ctx.fillStyle = '#F59E0B';
+        ctx.font = '700 44px Outfit';
+        ctx.fillText('0' + (i + 1), 108, y + 12);
+
+        ctx.fillStyle = '#FAFAFA';
+        ctx.font = '600 36px Rubik';
+        const name = show.title.length > 22 ? show.title.slice(0, 21) + '…' : show.title;
+        ctx.fillText(name, 210, y + 16);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '500 30px Rubik';
+        ctx.textAlign = 'right';
+        ctx.fillText(show.count + ' ép.', 980, y + 22);
+        ctx.textAlign = 'left';
+      });
+
+      // ── Footer ──
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = '500 26px Rubik';
+      ctx.fillText('Généré avec rewatching.app · TV Time ferme le 15.07.2026', 80, 1850);
+    }
+
+    // ===== RENDER PREVIEW (after upload) =====
+    async function renderPreview(s) {
+      const canvas = document.getElementById('previewCanvas');
+      if (!canvas) return;
+      await drawWrappedCanvas(canvas, s);
+    }
+
+    // ===== DOWNLOAD =====
+    async function downloadImage(btn) {
+      if (!stats) return showToast('Aucune donnée à exporter.');
+      try {
+        if (btn) btn.disabled = true;
+        const canvas = document.getElementById('previewCanvas');
+        const link = document.createElement('a');
+        link.download = 'rewatch-recap.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Image téléchargée ✓');
+      } catch (err) {
+        showToast('Erreur : ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    // Helper
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function canvasToFile() {
+      const canvas = document.getElementById('previewCanvas');
+      return new Promise(resolve => {
+        canvas.toBlob(blob => {
+          resolve(new File([blob], 'rewatch-recap.png', { type: 'image/png' }));
+        }, 'image/png');
+      });
+    }
+
+    function shareThreads() {
+      const text = 'J\'ai regardé ' + (stats ? stats.totalEpisodes : 'X') + ' épisodes en ' + (stats ? stats.uniqueDays : 'X') + ' jours de séries 📺 Découvre ton récap avec ReWatch →';
+      // Download first so the user can attach the image manually
+      downloadImage();
+      setTimeout(() => {
+        window.open('https://threads.net/intent/post?text=' + encodeURIComponent(text + ' ' + window.location.href), '_blank');
+      }, 300);
+    }
+
+    function shareInstagramBtn(btn) {
+      canvasToFile().then(file => {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: 'Mon ReWatch', text: 'Découvre mon récap TV Time 📺' }).catch(() => {});
+        } else if (navigator.share) {
+          navigator.share({ title: 'Mon ReWatch', text: 'Découvre mon récap TV Time 📺' }).catch(() => {});
+        } else {
+          downloadImage(btn);
+          showToast('Image téléchargée — poste-la sur Instagram 📱');
+        }
+      });
+    }
+
+    // ===== SMOOTH SCROLL =====
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  </script>
+
+</body>
+</html>

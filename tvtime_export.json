@@ -1,0 +1,82 @@
+[
+  {
+    "title": "The Boys",
+    "seasons": [
+      {
+        "season_number": 1,
+        "episodes": [
+          { "episode_number": 1, "is_watched": true, "watched_at": "2023-07-12T20:30:00Z" },
+          { "episode_number": 2, "is_watched": true, "watched_at": "2023-07-13T21:15:00Z" },
+          { "episode_number": 3, "is_watched": true, "watched_at": "2023-07-15T22:00:00Z" }
+        ]
+      },
+      {
+        "season_number": 4,
+        "episodes": [
+          { "episode_number": 1, "is_watched": true, "watched_at": "2024-06-13T21:45:00Z" },
+          { "episode_number": 2, "is_watched": true, "watched_at": "2024-06-14T20:15:00Z" },
+          { "episode_number": 3, "is_watched": true, "watched_at": "2024-06-20T22:10:00Z" },
+          { "episode_number": 4, "is_watched": true, "watched_at": "2024-06-27T21:00:00Z" },
+          { "episode_number": 5, "is_watched": true, "watched_at": "2025-03-15T20:45:00Z" },
+          { "episode_number": 6, "is_watched": true, "watched_at": "2025-03-22T21:30:00Z" }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "House of the Dragon",
+    "seasons": [
+      {
+        "season_number": 1,
+        "episodes": [
+          { "episode_number": 1, "is_watched": true, "watched_at": "2022-08-21T22:00:00Z" },
+          { "episode_number": 2, "is_watched": true, "watched_at": "2022-08-28T21:00:00Z" },
+          { "episode_number": 8, "is_watched": true, "watched_at": "2022-10-23T20:30:00Z" }
+        ]
+      },
+      {
+        "season_number": 2,
+        "episodes": [
+          { "episode_number": 1, "is_watched": true, "watched_at": "2024-06-16T22:00:00Z" },
+          { "episode_number": 2, "is_watched": true, "watched_at": "2024-06-23T22:00:00Z" },
+          { "episode_number": 3, "is_watched": true, "watched_at": "2024-06-30T21:45:00Z" },
+          { "episode_number": 7, "is_watched": true, "watched_at": "2024-08-04T22:15:00Z" }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Shōgun",
+    "seasons": [
+      {
+        "season_number": 1,
+        "episodes": [
+          { "episode_number": 1, "is_watched": true, "watched_at": "2024-02-27T20:00:00Z" },
+          { "episode_number": 2, "is_watched": true, "watched_at": "2024-03-05T21:00:00Z" },
+          { "episode_number": 9, "is_watched": true, "watched_at": "2024-04-16T19:30:00Z" },
+          { "episode_number": 10, "is_watched": true, "watched_at": "2024-04-23T20:45:00Z" }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "The Bear",
+    "seasons": [
+      {
+        "season_number": 2,
+        "episodes": [
+          { "episode_number": 1, "is_watched": true, "watched_at": "2023-06-22T00:30:00Z" },
+          { "episode_number": 6, "is_watched": true, "watched_at": "2023-07-01T23:15:00Z" },
+          { "episode_number": 10, "is_watched": true, "watched_at": "2023-07-10T01:00:00Z" }
+        ]
+      },
+      {
+        "season_number": 3,
+        "episodes": [
+          { "episode_number": 1, "is_watched": true, "watched_at": "2024-06-26T22:00:00Z" },
+          { "episode_number": 2, "is_watched": true, "watched_at": "2024-06-27T00:45:00Z" }
+        ]
+      }
+    ]
+  }
+]
