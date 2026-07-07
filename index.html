@@ -745,26 +745,36 @@
       });
     }
 
+    function shareText() {
+      return 'J\'ai regardé ' + (stats ? stats.totalEpisodes : 'X') + ' épisodes en ' + (stats ? stats.uniqueDays : 'X') + ' jours de séries 📺 Fais ton bilan sur ReWatch →';
+    }
+
+    function shareWithFile(url, label) {
+      canvasToFile().then(file => {
+        const payload = { files: [file], title: 'Mon ReWatch', text: shareText() + ' ' + window.location.href };
+        if (navigator.canShare && navigator.canShare(payload)) {
+          navigator.share(payload).catch(() => {});
+        } else if (navigator.share) {
+          // Files not supported — share text only (user picks the app)
+          navigator.share({ title: 'Mon ReWatch', text: shareText() + ' ' + window.location.href }).catch(() => {});
+        } else {
+          // No Web Share API at all — download + fallback
+          downloadImage();
+          if (url) {
+            setTimeout(() => window.open(url + encodeURIComponent(shareText() + ' ' + window.location.href), '_blank'), 400);
+          } else {
+            showToast('Image téléchargée — poste-la sur ' + label + ' 📱');
+          }
+        }
+      });
+    }
+
     function shareThreads() {
-      const text = 'J\'ai regardé ' + (stats ? stats.totalEpisodes : 'X') + ' épisodes en ' + (stats ? stats.uniqueDays : 'X') + ' jours de séries 📺 Découvre ton récap avec ReWatch →';
-      // Download first so the user can attach the image manually
-      downloadImage();
-      setTimeout(() => {
-        window.open('https://threads.net/intent/post?text=' + encodeURIComponent(text + ' ' + window.location.href), '_blank');
-      }, 300);
+      shareWithFile('https://threads.net/intent/post?text=', 'Threads');
     }
 
     function shareInstagramBtn(btn) {
-      canvasToFile().then(file => {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], title: 'Mon ReWatch', text: 'Découvre mon récap TV Time 📺' }).catch(() => {});
-        } else if (navigator.share) {
-          navigator.share({ title: 'Mon ReWatch', text: 'Découvre mon récap TV Time 📺' }).catch(() => {});
-        } else {
-          downloadImage(btn);
-          showToast('Image téléchargée — poste-la sur Instagram 📱');
-        }
-      });
+      shareWithFile(null, 'Instagram');
     }
 
     // ===== SMOOTH SCROLL =====
