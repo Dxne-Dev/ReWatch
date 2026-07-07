@@ -747,7 +747,7 @@
 
     // ===== EMAIL CAPTURE =====
     // Set your form endpoint here (Formspree / Web3Forms / your own API)
-    const EMAIL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw8U8uLcoUD3zEP-3m5Cr8u6SvAjdI1_cjtU5ynCBrJgeFK6e3eHZ-SDsKvopg4faCUng/exec';
+    const EMAIL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwyNDyaLWemT2dtEB7djCFH6gB21A7t6awiF8cDX5HDXKbA7xzM3VxpiBOLat_q3l8S1w/exec';
 
     async function handleEmail(e) {
       e.preventDefault();
@@ -761,10 +761,11 @@
       btn.disabled = true;
 
       try {
+        // text/plain évite le preflight OPTIONS (bloqué par Google Apps Script)
         const res = await fetch(EMAIL_ENDPOINT, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ email }),
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: email,
         });
         if (res.ok || res.status === 200) {
           showToast('Merci ! Tu seras prévenu si ça sort 📬');
