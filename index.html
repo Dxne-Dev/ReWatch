@@ -773,12 +773,9 @@
           throw new Error('HTTP ' + res.status);
         }
       } catch {
-        // Fallback: mailto
-        window.location.href = 'mailto:?subject=ReWatch%20-%20Notification&body=' + encodeURIComponent(
-          'Nouvel email intéressé par ReWatch : ' + email
-        );
-        showToast('Email enregistré (vérifie tes mails)');
-        e.target.innerHTML = '<p class="text-zinc-500 text-sm text-center py-2">Merci !</p>';
+        showToast('Erreur réseau — réessaie plus tard.');
+        btn.textContent = orig;
+        btn.disabled = false;
       }
       return false;
     }
