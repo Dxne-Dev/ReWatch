@@ -186,6 +186,27 @@
             Partager sur Instagram
           </button>
         </div>
+
+        <!-- Email capture (soft, after result, never blocking) -->
+        <div id="emailCapture" class="max-w-md mx-auto mt-10 pt-8 border-t border-white/5 animate-fade-up" style="display:none;">
+          <p class="text-zinc-400 text-sm text-center mb-4">
+            Envie d'être prévenu si je sors une vraie alternative française à TV Time ?
+          </p>
+          <form id="emailForm" class="flex flex-col sm:flex-row gap-3" onsubmit="return handleEmail(event)">
+            <input
+              type="email"
+              name="email"
+              placeholder="ton@email.fr"
+              required
+              class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-600 text-sm outline-none focus:border-[#F59E0B]/50 transition-colors"
+              style="background:rgba(255,255,255,0.04);"
+            >
+            <button type="submit" class="btn-secondary text-sm whitespace-nowrap px-6 py-3">
+              Me tenir au courant
+            </button>
+          </form>
+          <p class="text-zinc-600 text-xs text-center mt-3">Pas de spam, juste un email si/quand ça sort.</p>
+        </div>
       </div>
     </section>
 
@@ -390,6 +411,7 @@
               const count = rawData.length;
               fileStats.textContent = `${count} série${count > 1 ? 's' : ''} détectée${count > 1 ? 's' : ''}`;
               results.classList.remove('hidden');
+              document.getElementById('emailCapture').style.display = '';
               results.scrollIntoView({ behavior: 'smooth', block: 'start' });
               isProcessing = false;
             }, 400);
@@ -417,6 +439,7 @@
       dropProgress.classList.add('hidden');
       dropSuccess.classList.add('hidden');
       results.classList.add('hidden');
+      document.getElementById('emailCapture').style.display = 'none';
       isProcessing = false;
     }
 
@@ -720,6 +743,44 @@
 
     function shareInstagramBtn(btn) {
       shareWithFile(null, 'Instagram');
+    }
+
+    // ===== EMAIL CAPTURE =====
+    // Set your form endpoint here (Formspree / Web3Forms / your own API)
+    const EMAIL_ENDPOINT = 'https://formspree.io/f/REPLACE_ME';
+
+    async function handleEmail(e) {
+      e.preventDefault();
+      const input = e.target.querySelector('input[name="email"]');
+      const email = input.value.trim();
+      if (!email) return false;
+
+      const btn = e.target.querySelector('button');
+      const orig = btn.textContent;
+      btn.textContent = 'Envoi…';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(EMAIL_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (res.ok || res.status === 200) {
+          showToast('Merci ! Tu seras prévenu si ça sort 📬');
+          e.target.innerHTML = '<p class="text-[#22C55E] text-sm text-center py-2">Merci pour ton intérêt !</p>';
+        } else {
+          throw new Error('HTTP ' + res.status);
+        }
+      } catch {
+        // Fallback: mailto
+        window.location.href = 'mailto:?subject=ReWatch%20-%20Notification&body=' + encodeURIComponent(
+          'Nouvel email intéressé par ReWatch : ' + email
+        );
+        showToast('Email enregistré (vérifie tes mails)');
+        e.target.innerHTML = '<p class="text-zinc-500 text-sm text-center py-2">Merci !</p>';
+      }
+      return false;
     }
 
     // ===== SMOOTH SCROLL =====
